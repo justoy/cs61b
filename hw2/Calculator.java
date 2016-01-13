@@ -2,7 +2,7 @@ import list.EquationList;
 
 public class Calculator {
     // YOU MAY WISH TO ADD SOME FIELDS
-
+    public EquationList eList=new EquationList("None",0,null);
     /**
      * TASK 2: ADDING WITH BIT OPERATIONS
      * add() is a method which computes the sum of two integers x and y using 
@@ -63,7 +63,14 @@ public class Calculator {
      * @param result is an integer corresponding to the result of the equation
      **/
     public void saveEquation(String equation, int result) {
-        // YOUR CODE HERE
+        if(eList.equation.equals("None")){
+            eList.equation=equation;
+            eList.result=result;
+        }
+        else{
+            EquationList temp= eList;
+            eList=new EquationList(equation,result,temp);
+        }
     }
 
     /**
@@ -75,6 +82,12 @@ public class Calculator {
      **/
     public void printAllHistory() {
         // YOUR CODE HERE
+        EquationList temp=eList;
+        
+        while(temp!=null){
+            System.out.println(temp.equation + " = "+Integer.toString(temp.result));
+            temp=temp.next;
+        }
     }
 
     /**
@@ -85,7 +98,11 @@ public class Calculator {
      * Ex   "1 + 2 = 3"
      **/
     public void printHistory(int n) {
-        // YOUR CODE HERE
+        EquationList temp=eList;
+        for(int i=1;i<n;++i){
+            temp = temp.next;
+        }
+        System.out.println(temp.equation + " = "+Integer.toString(temp.result));
     }    
 
     /**
@@ -93,7 +110,7 @@ public class Calculator {
      * undoEquation() removes the most recent equation we saved to our history.
     **/
     public void undoEquation() {
-        // YOUR CODE HERE
+        eList=eList.next;
     }
 
     /**
@@ -101,7 +118,9 @@ public class Calculator {
      * clearHistory() removes all entries in our history.
      **/
     public void clearHistory() {
-        // YOUR CODE HERE
+        while(eList!=null){
+            eList=eList.next;
+        }
     }
 
     /**
@@ -111,8 +130,13 @@ public class Calculator {
      * @return the sum of all of the results in history
      **/
     public int cumulativeSum() {
-        // YOUR CODE HERE
-        return -1;
+        int sum=0;
+        EquationList temp= eList;
+        while(temp != null){
+            sum += temp.result;
+           temp = temp.next;
+        }
+        return sum;
     }
 
     /**
@@ -122,7 +146,12 @@ public class Calculator {
      * @return the product of all of the results in history
      **/
     public int cumulativeProduct() {
-        // YOUR CODE HERE
-        return -1;
+        int product=0;
+        EquationList temp= eList;
+        while(temp != null){
+            product *= temp.result;
+            temp = temp.next;
+        }
+        return product;
     }
 }
