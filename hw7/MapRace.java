@@ -86,9 +86,11 @@ public class MapRace {
         System.out.println(hr);
 
         // TreeMap removes
+        /*
         long tRemove = timeRemove61B(tMap, num, key_range);
         String tr = "TreeMap " + num + " removes: " + tRemove + " ms.";
         System.out.println(tr);
+        */
     }
 
     public static final String followUp() {

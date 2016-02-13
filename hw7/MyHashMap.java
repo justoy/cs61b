@@ -7,60 +7,54 @@ import java.util.HashSet;
 public class MyHashMap<K,V> implements Map61B<K, V>{
     private double loadFactor = 0.75;
     private int size = 0;
-    private int capacity=11;
-    private HashSet<K> keySet;
-    private ArrayList<Entry<K,V>> table;
+    private int capacity=5;
+    private HashSet<K> keySet = new HashSet<K>();
+    private Entry<K,V>[] table;
     private int threshhold;
 
     public MyHashMap(){
-        table = new ArrayList<Entry<K,V>>(capacity);
-        keySet = new HashSet<K>(capacity);
-        for(int i=0;i<capacity;++i){
-            table.add(null);
-        }
-        threshhold =(int) (loadFactor * capacity);
+        threshhold=(int)(loadFactor*capacity);
+        table = new Entry[capacity]; // Entry<K,V> Wrong???
     }
     public MyHashMap(int initialCapacity){
         capacity = initialCapacity;
-        table = new ArrayList<Entry<K,V>>(capacity);
-        keySet = new HashSet<K>(capacity);
-        for(int i=0;i<capacity;++i){
-            table.add(null);
-        }
-        threshhold =(int) (loadFactor * capacity);
+        threshhold=(int)(loadFactor*capacity);
+        table = new Entry[capacity];
     }
     public MyHashMap(int initialCapacity, float loadFactor){
         capacity = initialCapacity;
-        this.loadFactor=(double)loadFactor;
-        table = new ArrayList<Entry<K,V>>(capacity);
-        keySet = new HashSet<K>(capacity);
-        for(int i=0;i<capacity;++i){
-            table.add(null);
-        }
-        threshhold =(int) (loadFactor * initialCapacity);
+        this.loadFactor =  loadFactor;
+        threshhold=(int)(loadFactor*capacity);
+        table = (Entry<K,V>[])new Object[capacity];
     }
 
-    private class Entry<K,V>{
+
+    private static class Entry<K,V>{
         private K key;
         private V val;
         private Entry<K,V> next;
+        private boolean deleted;
 
-        public Entry(K k, V v, Entry<K,V> next){
-            key= k;
-            val= v;
-            this.next =next;
+        public Entry(K k, V v, Entry<K,V> n){
+            key = k;
+            val = v;
+            next =n;
+            deleted = false;
+        }
+
+        public Entry(K k, V v, Entry<K,V> n, boolean deleted){
+            key = k;
+            val = v;
+            next =n;
+            this.deleted = deleted;
         }
     }
 
     @Override
     public void clear(){
         size = 0;
-        table = new ArrayList<Entry<K,V>>(capacity);
-        threshhold =(int) (loadFactor * capacity);
-        keySet.clear();
-        for(int i=0;i<capacity;++i){
-            table.add(null);
-        }
+        threshhold =(int) (capacity*loadFactor);
+        table = new Entry[capacity];
     }
 
     @Override
@@ -70,11 +64,10 @@ public class MyHashMap<K,V> implements Map61B<K, V>{
 
     @Override
     public V get(K key){
-        if(size==0) return null;
-        int hashcode = key.hashCode();
-        int index = (hashcode & 0x7FFFFFFF) % capacity;
-        for(Entry<K, V> e=table.get(index);e!=null;e=e.next){
-            if(e.key.equals(key)){
+        int hashcode = hash(key.hashCode());
+        int index = hashcode % capacity;
+        for(Entry<K, V> e = table[index]; e!= null; e=e.next){
+            if(e.key.equals(key)&&!e.deleted){
                 return e.val;
             }
         }
@@ -88,21 +81,18 @@ public class MyHashMap<K,V> implements Map61B<K, V>{
 
     @Override
     public void put(K key, V value){
-        int hashcode = key.hashCode();
-        int index = (hashcode & 0x7FFFFFFF) % capacity;
-        //System.out.printf("thresh= %d, size= %d, index= %d, capacity= %d\n", threshhold, size, index, capacity);
-
-        for(Entry<K, V> e=table.get(index);e!=null;e=e.next){
-            if(e.key.hashCode()==hashcode&&e.key.equals(key)){
-                e.val=value;
+        int hashcode = hash(key.hashCode());
+        int index = hashcode % capacity;
+        for(Entry<K, V> e = table[index]; e!= null; e=e.next){
+            if(e.key.equals(key)&&!e.deleted){
+                e.val = value;
                 return;
             }
         }
 
-        Entry<K, V> e = table.get(index);
-        table.add(index, new Entry<K, V>(key, value, e));
+        table[index] = new Entry<K, V>(key, value, table[index]);
+
         size++;
-        keySet.add(key);
         if(size>threshhold){
             rehash();
         }
@@ -110,69 +100,61 @@ public class MyHashMap<K,V> implements Map61B<K, V>{
 
     public void rehash(){
         int oldCapacity = capacity;
-        capacity= capacity*2+1;
-        threshhold =(int)(capacity * loadFactor);
-        ArrayList<Entry<K,V>> oldTable = table;
+        capacity = capacity*2+1;
+        Entry[] oldTable = table;
         clear();
         for(int i=0;i<oldCapacity;++i){
-            for(Entry<K,V>e= oldTable.get(i);e!=null;e=e.next){
-                put(e.key, e.val);
-                //System.out.println(i);
+            for(Entry<K,V> e = oldTable[i];e!=null;e=e.next){
+                if(e.deleted) continue;
+                int hashcode = hash(e.key.hashCode());
+                int index = hashcode % capacity;
+                table[index] = new Entry<K, V>(e.key, e.val, table[index]);
+                size++;
             }
         }
+
     }
 
     @Override
     public V remove(K key){
-        if(containsKey(key)==false) return null;
-        int hashcode = key.hashCode();
-        int index = (hashcode & 0x7FFFFFFF) % capacity;
-        //I want a pointer!!
-        Entry<K,V> e= table.get(index);
-        if(e.key.hashCode()==hashcode&&e.key.equals(key)){
-            V val=e.val;
-            table.add(index, e.next);
-            size--;
-            keySet.remove(key);
-            return val;
-        }
-         for(e=table.get(index);e.next!=null;e=e.next){
-            if(e.next.key.hashCode()==hashcode&&e.next.key.equals(key)){
-                V val = e.next.val;
-                e.next=e.next.next;
+        int hashcode = hash(key.hashCode());
+        int index = hashcode % capacity;
+        Entry<K,V> f = table[index];
+        if(f==null) return null;
+        for(Entry<K,V> e = table[index];e!=null;e=e.next){
+            if(e.key.equals(key)&&e.deleted==false){
+                e.deleted=true;
                 size--;
-                keySet.remove(key);
-                return val;
+                return e.val;
             }
         }
-        return null;       
+        return null;
     }
     @Override
     public V remove(K key, V value){
-        if(containsKey(key)==false) return null;
-        int hashcode = key.hashCode();
-        int index = (hashcode & 0x7FFFFFFF) % capacity;
-        Entry<K,V> e= table.get(index);
-        if(e.key.hashCode()==hashcode&&e.key.equals(key)&&e.val.equals(value)){
-            V val=e.val;
-            table.add(index, e.next);
-            size--;
-            keySet.remove(key);
-            return val;
-        }
-         for(e=table.get(index);e.next!=null;e=e.next){
-            if(e.next.key.hashCode()==hashcode&&e.next.key.equals(key)&&e.next.val.equals(value)){
-                V val = e.next.val;
-                e.next=e.next.next;
+        int hashcode = hash(key.hashCode());
+        int index = hashcode % capacity;
+        Entry<K,V> f = table[index];
+        if(f==null) return null;
+        for(Entry<K,V> e = table[index];e!=null;e=e.next){
+            if(e.key.equals(key)&&e.val==value&&e.deleted==false){
+                e.deleted=true;
                 size--;
-                keySet.remove(key);
-                return val;
+                return e.val;
             }
         }
-        return null;   
+        return null;
     }
     @Override
     public Set<K> keySet(){
         return keySet;
     }
-}
+
+    /* this function is from java library code
+        http://stackoverflow.com/questions/9364134/what-hashing-function-does-java-use-to-implement-hashtable-class
+    */
+        private int hash(int h){
+            h ^= (h >>> 20) ^ (h >>> 12);
+            return h ^ (h >>> 7) ^ (h >>> 4);
+        }
+    }
