@@ -1,0 +1,85 @@
+package ngordnet;
+
+import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.*;
+
+public class YearlyRecord {
+    private ArrayList<String> wordList;
+    private HashMap<String, Integer> recordMap;
+
+
+    /** Creates a new empty YearlyRecord. */
+    public YearlyRecord() {
+        wordList = new ArrayList<String>();
+        recordMap = new HashMap<String, Integer>();
+    }
+    /** Creates a YearlyRecord using the given data. */
+    public YearlyRecord(HashMap<String, Integer> otherCountMap) {
+        wordList = new ArrayList<String>();
+        recordMap = new HashMap<String,Integer>(otherCountMap);
+        for(String k : otherCountMap.keySet()){
+            int count = otherCountMap.get(k);
+            wordList.add(k);
+        }
+
+    }
+
+    /** Returns the number of times WORD appeared in this year. */
+    public int count(String word) {
+        return recordMap.get(word);
+    }
+
+    /** Records that WORD occurred COUNT times in this year. */
+    public void put(String word, int count) {
+        recordMap.put(word,count);
+        wordList.add(word);
+    }
+
+    /** Returns the number of words recorded this year. */
+    public int size() {
+        return recordMap.size();
+    }
+
+    /** Returns all words in ascending order of count. */
+    public Collection<String> words() {
+        Collections.sort(wordList, new MyComparator());
+        Collection<String> s = new LinkedList<String>();
+        for(int i=0;i<wordList.size();++i){
+            s.add(wordList.get(i));
+        }
+        return s;
+    }
+
+    /** Returns all counts in ascending order of count. */
+    public Collection<Number> counts() {
+        Collections.sort(wordList, new MyComparator());
+        Collection<Number> countSet = new HashSet<Number>(wordList.size());
+        for(String s:wordList){
+            countSet.add(recordMap.get(s));
+        }
+        return countSet;
+    }
+
+    /**
+     * Returns rank of WORD. Most common word is rank 1. If two words have the
+     * same rank, break ties arbitrarily. No two words should have the same
+     * rank.
+     */
+    public int rank(String word) {
+        Collections.sort(wordList, new MyComparator());
+        return wordList.size()-wordList.indexOf(word);
+    }
+
+    public class MyComparator implements Comparator<String>{
+            @Override
+            public int compare(String s1, String s2) {
+                int c1 = recordMap.get(s1);
+                int c2 = recordMap.get(s2);
+                return c1-c2;
+            }
+    }
+}
