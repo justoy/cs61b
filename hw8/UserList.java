@@ -214,7 +214,6 @@ public class UserList {
     *       printed, sortFeatures equals "pages".
     **/
     public void mergeSort(String sortFeature){
-        // bigO(n^2)????
        CatenableQueue<CatenableQueue<User>> result = makeQueueOfQueues();
         while (result.size() > 1) {
             result.enqueue(mergeTwoQueues(sortFeature, result.dequeue(), result.dequeue()));
