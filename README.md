@@ -1,2 +1,2 @@
 # cs61b
-Learning CS61B Data structures http://cs61b.ug/sp15/
+Learning CS61B Data structures http://datastructur.es/sp15/
